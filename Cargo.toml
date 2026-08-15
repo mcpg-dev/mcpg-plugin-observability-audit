@@ -1,0 +1,40 @@
+[package]
+name = "mcpg-plugin-observability-audit"
+version = "0.1.0-alpha.15"
+license = "Apache-2.0"
+edition = "2024"
+description = "Audit logging ToolGate plugin for MCPG gateway — structured audit events with pluggable sinks"
+
+[lib]
+# cdylib: produces the `.so`/`.dylib` the gateway's native_loader
+# opens via `libloading`. rlib: keeps in-tree unit tests on internal
+# helpers (redact_credentials_value etc.) building without a dylib.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+mcpg-plugin-protocol = { git = "https://github.com/mcpg-dev/mcpg-plugin-protocol", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+mcpg-plugin-sdk = { git = "https://github.com/mcpg-dev/mcpg-plugin-sdk", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+mcpg-glob = { git = "https://github.com/mcpg-dev/mcpg-glob", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+mcpg-sensitive = { git = "https://github.com/mcpg-dev/mcpg-sensitive", tag = "v0.1.0-beta.13", version = "=0.1.0-beta.13" }
+metrics = "0.24"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+tracing = "0.1"
+uuid = { version = "1", features = ["v7"] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[features]
+# Default ON so standalone `cargo build -p <this>` still produces a
+# working cdylib. Disabled by the gateway's path-dep so multiple
+# plugins linked together don't all export `mcpg_plugin_register`
+# (linker collision).
+default = ["cdylib-export"]
+cdylib-export = []
+# Declared so the SDK's per-kind `build_static` accessor
+# (gated `#[cfg(feature = "static-firstparty")]`) does not trigger
+# `unexpected_cfgs` in consumer compilation. Empty: this plugin is
+# consumed as a cdylib, not via the static-firstparty fast path.
+static-firstparty = []
